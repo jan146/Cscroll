@@ -28,6 +28,9 @@ A simple text scroller, written in C.
   ### Set custom separator
   Set with `-s [separator]` or `--separator [separator]`. If the text should rotate, [separator] will be appended to the text.
   
+## Help
+  For any additional help, run `cscroll -h` or `cscroll --help`.
+ 
 ## Example
   `$ cscroll -d 0.3 -l 10 -u 100 "Today is " -c "date +%A" ". "`
   
