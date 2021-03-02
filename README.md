@@ -1,5 +1,6 @@
 # Cscroll
 A simple text scroller, written in C.
+Works with <a href="https://github.com/polybar/polybar">polybar</a>!
 
 ## Installation
   ```bash
