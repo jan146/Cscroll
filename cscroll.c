@@ -9,9 +9,11 @@ float delay = 0.1;
 int update = 0;
 int len = 25;
 int forceRotate = 0;
+char* separator;
+
 char* full;
 int offset = 0;
-const int maxLength = 200;
+const int maxLength = 1000;
 
 void removeNL(char* arr){
     if (arr[strlen(arr)-1] == '\n')
@@ -69,6 +71,9 @@ void printHelp(){
                         parameter, n should be passed\n\
                         after \"-u\").\n\
                         Default: off (0)\n\
+            -s:             If the text should rotate,\n\
+            (--separator)   this string will be appended\n\
+                            to the end of the text.\n\
         \n\
         TEXT:\n\
             Add either strings or commands (-c) to the text\n\
@@ -175,6 +180,10 @@ void parseArgs(int argc, char* argv[]){
                 setUpdate(argv[++i]);
                 continue;
             }
+            else if (strcmp(str, "separator") == 0){
+                setUpdate(argv[++i]);
+                continue;
+            }
             else if (strcmp(str, "command") == 0){
                 strcat(full, getStdout(argv[++i]));
                 continue;
@@ -187,18 +196,20 @@ void parseArgs(int argc, char* argv[]){
         }
         else if (argv[i][0] == '-'){
             switch (argv[i][1]){
-                case 'h':  printHelp();
-                           break;
-                case 'd':  setDelay(argv[++i]);
-                           break;
-                case 'l':  setLength(argv[++i]);
-                           break;
-                case 'f':  forceRotate = 1;
-                           break;
-                case 'u':  setUpdate(argv[++i]);
-                           break;
-                case 'c':  strcat(full, getStdout(argv[++i]));
-                           break;
+                case 'h':   printHelp();
+                            break;
+                case 'd':   setDelay(argv[++i]);
+                            break;
+                case 'l':   setLength(argv[++i]);
+                            break;
+                case 'f':   forceRotate = 1;
+                            break;
+                case 'u':   setUpdate(argv[++i]);
+                            break;
+                case 's':   separator = argv[++i];
+                            break;
+                case 'c':   strcat(full, getStdout(argv[++i]));
+                            break;
                 default:{
                     char* reason = (char*) malloc(30 * sizeof(char) + sizeof(argv[i]));
                     sprintf(reason, "invalid argument \"%s\"\n", argv[i]);
@@ -209,6 +220,9 @@ void parseArgs(int argc, char* argv[]){
         else
             strcat(full, argv[i]);
     }
+
+    if (strlen(full) > len)
+        strcat(full, separator);
 
 }
 
@@ -224,17 +238,18 @@ void updateArgs(int argc, char* argv[]){
                 i++;
             else if (strcmp(str, "update") == 0)
                 i++;
+            else if (strcmp(str, "separator") == 0)
+                i++;
             else if (strcmp(str, "command") == 0)
                 strcat(temp, getStdout(argv[++i]));
             continue;
         }
         else if (argv[i][0] == '-'){
             switch (argv[i][1]){
-                case 'd':   i++;
-                            break;
-                case 'l':   i++;
-                            break;
-                case 'u':   i++;
+                case 'd':
+                case 'l':
+                case 'u':
+                case 's':   i++;
                             break;
                 case 'c':   strcat(temp, getStdout(argv[++i]));
                             break;
@@ -244,8 +259,14 @@ void updateArgs(int argc, char* argv[]){
         else
             strcat(temp, argv[i]);
     }
-    if (strcmp(full, temp) != 0)
+
+    if (strlen(temp) > len)
+        strcat(temp, separator);
+
+    if (strcmp(full, temp) != 0){
         full = temp;
+        offset = 0;
+    }
 
 }
 
@@ -259,11 +280,8 @@ void rotateText(){
             if (invalidCharsBefore(c) == invalidCharsAfter(c)){
                 char* first = c - invalidCharsBefore(c);
                 char* last = c + invalidCharsAfter(c); 
-                char wideChar[last - first + 1];
-                for (int j = 0; j < (last - first + 1); j++){
+                for (int j = 0; j < (last - first + 1); j++)
                     printf("%c", *(first+j));
-                    wideChar[j] = *(first+j);
-                }
             }
             else
                 printf("%c", ' ');
@@ -278,20 +296,20 @@ int main(int argc, char* argv[]){
     full = (char*) malloc(maxLength);
 
     parseArgs(argc, argv);
-    printArgs(argc, argv);
+    // printArgs(argc, argv);
 
     while (1){
 
-        if (strlen(full) > len || forceRotate){
+        if (strlen(full) > len || forceRotate)
             rotateText();
-            offset++;
-            if (offset >= strlen(full))
-                offset -= strlen(full);
-            if (update > 0 && offset % update == 0)
-                updateArgs(argc, argv);
-        }
         else
             printf(full);
+
+        offset++;
+        if (offset >= strlen(full))
+            offset -= strlen(full);
+        if (update > 0 && offset % update == 0)
+            updateArgs(argc, argv);
         
         printf("\n");
         fflush(stdout);
