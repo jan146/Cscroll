@@ -9,7 +9,7 @@ float delay = 0.1;
 int update = 0;
 int len = 25;
 int forceRotate = 0;
-char* separator;
+char* separator = NULL;
 
 char* full;
 int offset = 0;
@@ -160,39 +160,26 @@ void parseArgs(int argc, char* argv[]){
     for (int i = 1; i < argc; i++){
         if (argv[i][0] == '-' && argv[i][1] == '-'){
             char* str = argv[i] + 2;
-            if (strcmp(str, "help") == 0){
+            if (strcmp(str, "help") == 0)
                 printHelp();
-                continue;
-            }
-            else if (strcmp(str, "delay") == 0){
+            else if (strcmp(str, "delay") == 0)
                 setDelay(argv[++i]);
-                continue;   
-            }
-            else if (strcmp(str, "length") == 0){
+            else if (strcmp(str, "length") == 0)
                 setLength(argv[++i]);
-                continue;
-            }
-            else if (strcmp(str, "force") == 0){
+            else if (strcmp(str, "force") == 0)
                 forceRotate = 1;
-                continue;
-            }
-            else if (strcmp(str, "update") == 0){
+            else if (strcmp(str, "update") == 0)
                 setUpdate(argv[++i]);
-                continue;
-            }
-            else if (strcmp(str, "separator") == 0){
+            else if (strcmp(str, "separator") == 0)
                 setUpdate(argv[++i]);
-                continue;
-            }
-            else if (strcmp(str, "command") == 0){
+            else if (strcmp(str, "command") == 0)
                 strcat(full, getStdout(argv[++i]));
-                continue;
-            }
             else{
                 char* reason = (char*) malloc(30 * sizeof(char) + sizeof(str));
                 sprintf(reason, "invalid argument \"--%s\"\n", str);
                 invalidArgs(reason);
             }
+            continue;
         }
         else if (argv[i][0] == '-'){
             switch (argv[i][1]){
@@ -221,7 +208,7 @@ void parseArgs(int argc, char* argv[]){
             strcat(full, argv[i]);
     }
 
-    if (strlen(full) > len)
+    if (strlen(full) > len && separator != NULL)
         strcat(full, separator);
 
 }
@@ -260,7 +247,7 @@ void updateArgs(int argc, char* argv[]){
             strcat(temp, argv[i]);
     }
 
-    if (strlen(temp) > len)
+    if (strlen(temp) > len && separator != NULL)
         strcat(temp, separator);
 
     if (strcmp(full, temp) != 0){
@@ -296,7 +283,7 @@ int main(int argc, char* argv[]){
     full = (char*) malloc(maxLength);
 
     parseArgs(argc, argv);
-    // printArgs(argc, argv);
+    printArgs(argc, argv);
 
     while (1){
 
