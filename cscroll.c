@@ -11,7 +11,7 @@ int len = 25;
 int forceRotate = 0;
 char* separator = NULL;
 
-char* full;
+char* full = NULL;
 int offset = 0;
 const int maxLength = 1000;
 
@@ -283,7 +283,10 @@ int main(int argc, char* argv[]){
     full = (char*) malloc(maxLength);
 
     parseArgs(argc, argv);
-    printArgs(argc, argv);
+    // printArgs(argc, argv);
+    
+    if (full == NULL || strcmp(full, "") == 0)
+        return(0);
 
     while (1){
 
@@ -303,7 +306,6 @@ int main(int argc, char* argv[]){
         usleep(1000000*delay);
 
     }
-
     return(0);
 
 }
