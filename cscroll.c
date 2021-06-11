@@ -190,7 +190,7 @@ void parseArgs(int argc, char* argv[]){
 
 void updateArgs(int argc, char* argv[]){
 
-    char* temp = (char*) malloc(maxLength*sizeof(char));
+    char* temp = (char*) calloc(maxLength, sizeof(char));
     for (int i = 1; i < argc; i++){
         if (argv[i][0] == '-' && argv[i][1] == '-'){
             char* str = argv[i] + 2;
@@ -343,11 +343,12 @@ int main(int argc, char* argv[]){
 
     while (1){
 
-        if (strlen(full) > len || forceRotate)
+        if (strlen(full) > len || forceRotate) {
             rotateText(0);
+            offset++;
+        }
         else
             rotateText(1);
-        offset++;
         if (offset >= strlen(full))
             offset -= strlen(full);
         if (update > 0 && offset % update == 0)
