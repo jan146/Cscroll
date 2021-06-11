@@ -119,30 +119,6 @@ void setUpdate(char* u){
     update = atoi(u);
 }
 
-int validChar(char c){
-    return isprint(c) || (c >= 0 && c <= 31);
-}
-
-int invalidCharsBefore(char* c){
-    int counter = 0;
-    c--;
-    while (!validChar(*c)){
-        counter++;
-        c--;
-    }
-    return counter;
-}
-
-int invalidCharsAfter(char* c){
-    int counter = 0;
-    c++;
-    while (!validChar(*c)){
-        counter++;
-        c++;
-    }
-    return counter;
-}
-
 void printArgs(int argc, char* argv[]){
     printf("%d: ", argc);
     for (int i = 0; i < argc; i++)
@@ -257,23 +233,100 @@ void updateArgs(int argc, char* argv[]){
 
 }
 
-void rotateText(){
+void rotateText(int dontRotate){
 
-    for (int i = 0; i < len; i++){
-        char* c = full+((offset+i)%strlen(full));
-        if (isprint(*c))
-            printf("%c", *c);
-        else {
-            if (invalidCharsBefore(c) == invalidCharsAfter(c)){
-                char* first = c - invalidCharsBefore(c);
-                char* last = c + invalidCharsAfter(c); 
-                for (int j = 0; j < (last - first + 1); j++)
-                    printf("%c", *(first+j));
-            }
-            else
-                printf("%c", ' ');
+    // skip wide character parts 
+    // (bytes after first one)
+    // and go to next actual character
+    int wideCharOffset = 0;
+
+    // increase offset by first
+    // character width for next
+    // rotation to start at the
+    // actual next character
+    int firstCharWidth = 1;
+
+    // count any wide characters
+    // as double wide to prevent
+    // a wide text output
+    int shortenLength = 0;
+
+    // Don't print "len" characters
+    // if "full" is shorter than
+    // the value of "len"
+    int printableChars = (strlen(full) < len) ? strlen(full) : len;
+    
+    for (int i = 0; i < printableChars - shortenLength - ((dontRotate) ? wideCharOffset : 0); i++){
+        char* ptr = full+((offset+i+wideCharOffset)%strlen(full));
+        char c = *ptr;
+
+        if (c >= -62 && c <= -33){
+            // 2 byte wide character
+            wchar_t wideChar[2];
+            char* unicodeString = malloc((2+1) * sizeof(char));
+            unicodeString[0] = c;
+            unicodeString[1] = *(ptr+1);
+            unicodeString[2] = L'\0';
+
+            mbstowcs(wideChar, unicodeString, 2);
+            printf("%ls", wideChar);
+            
+            wideCharOffset += 1;
+            if (i == 0)
+                firstCharWidth = 2;
+            
+            int width = wcwidth(*wideChar);
+            if (width > 1)
+                shortenLength += width - 1;
+            free(unicodeString);
         }
+        else if (c >= -32 && c <= -17){
+            // 3 byte wide character
+            wchar_t wideChar[2];
+            char* unicodeString = malloc((3+1) * sizeof(char));
+            unicodeString[0] = c;
+            unicodeString[1] = *(ptr+1);
+            unicodeString[2] = *(ptr+2);
+            unicodeString[3] = L'\0';
+
+            mbstowcs(wideChar, unicodeString, 2);
+            printf("%ls", wideChar);
+            
+            wideCharOffset += 2;
+            if (i == 0)
+                firstCharWidth = 3;
+            
+            int width = wcwidth(*wideChar);
+            if (width > 1)
+                shortenLength += width - 1;
+            free(unicodeString);
+        }
+        else if (c >= -16 && c <= -12){
+            // 4 byte wide character
+            wchar_t wideChar[2];
+            char* unicodeString = malloc((4+1) * sizeof(char));
+            unicodeString[0] = c;
+            unicodeString[1] = *(ptr+1);
+            unicodeString[2] = *(ptr+2);
+            unicodeString[3] = *(ptr+3);
+            unicodeString[4] = L'\0';
+
+            mbstowcs(wideChar, unicodeString, 2);
+            printf("%ls", wideChar);
+            
+            wideCharOffset += 3;
+            if (i == 0)
+                firstCharWidth = 4;
+            
+            int width = wcwidth(*wideChar);
+            if (width > 1)
+                shortenLength += width - 1;
+            free(unicodeString);
+        }
+        else // default (1 byte wide)
+            printf("%c", c);
     }
+    offset += (firstCharWidth - 1);
 
 }
 
@@ -291,10 +344,9 @@ int main(int argc, char* argv[]){
     while (1){
 
         if (strlen(full) > len || forceRotate)
-            rotateText();
+            rotateText(0);
         else
-            printf(full);
-
+            rotateText(1);
         offset++;
         if (offset >= strlen(full))
             offset -= strlen(full);
