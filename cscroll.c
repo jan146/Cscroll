@@ -20,23 +20,22 @@ void removeNL(char* arr){
         arr[strlen(arr)-1] = '\0';
 }
 
-char* getStdout(char *command){
+char* getStdout(char* command){
 
-    FILE* fp;
-    char path[100];
-
-    fp = popen(command, "r");
+    FILE* fp = popen(command, "r");
 
     if (fp == NULL){
-        printf("Command did not run properly\n");
+        // fflush(stdout);
+        fprintf(stderr, "Command did not run properly\n");
+        pclose(fp);
         exit(1);
     }
-    
-    if (fgets(path, sizeof(path), fp) != NULL){
-        char* ret = malloc(strlen(path) + 1);
-        strcpy(ret, path);
+
+    char* ret = (char*) malloc(1001*sizeof(char));
+    if (fgets(ret, 1000, fp) != NULL){
+        pclose(fp);
         removeNL(ret);
-        return (ret);
+        return ret;
     }
 
     pclose(fp);
@@ -171,7 +170,7 @@ void parseArgs(int argc, char* argv[]){
             else if (strcmp(str, "update") == 0)
                 setUpdate(argv[++i]);
             else if (strcmp(str, "separator") == 0)
-                setUpdate(argv[++i]);
+                separator = argv[++i];
             else if (strcmp(str, "command") == 0)
                 strcat(full, getStdout(argv[++i]));
             else{
@@ -208,14 +207,14 @@ void parseArgs(int argc, char* argv[]){
             strcat(full, argv[i]);
     }
 
-    if (strlen(full) > len && separator != NULL)
+    if ((strlen(full) > len || forceRotate) && separator != NULL)
         strcat(full, separator);
 
 }
 
 void updateArgs(int argc, char* argv[]){
 
-    char* temp = (char*) malloc(maxLength);
+    char* temp = (char*) malloc(maxLength*sizeof(char));
     for (int i = 1; i < argc; i++){
         if (argv[i][0] == '-' && argv[i][1] == '-'){
             char* str = argv[i] + 2;
@@ -247,10 +246,11 @@ void updateArgs(int argc, char* argv[]){
             strcat(temp, argv[i]);
     }
 
-    if (strlen(temp) > len && separator != NULL)
+    if ((strlen(temp) > len || forceRotate) && separator != NULL)
         strcat(temp, separator);
 
     if (strcmp(full, temp) != 0){
+        free(full);
         full = temp;
         offset = 0;
     }
@@ -280,7 +280,7 @@ void rotateText(){
 int main(int argc, char* argv[]){
 
     setlocale(LC_ALL, "");
-    full = (char*) malloc(maxLength);
+    full = (char*) malloc(maxLength*sizeof(char));
 
     parseArgs(argc, argv);
     // printArgs(argc, argv);
